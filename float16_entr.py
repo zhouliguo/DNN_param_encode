@@ -41,6 +41,7 @@ def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
 
 def dec2bin(f):
+    #f = f*4
     if f>=0:
         b0=0
     else:
@@ -74,17 +75,18 @@ for i in range(29,48):
     torch.save(model, model_path)
 quit()
 '''
-resnet = False
-n = 3
 
-f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
+resnet = False
+n = 5
+
+f = open('results/yolo_float16_xxx-0.01-5.csv', 'w')
 f.write('epoch,origsize,compsize,ratio\n')
 
 map_location = torch.device('cpu')
 
-for i in range(268,277-n):
-    model_path1 = 'weights/yolov5n/epoch'+str(i)+'_lr_0.001.pt'
-    model_path2 = 'weights/yolov5n/epoch'+str(i+n)+'_lr_0.001.pt'
+for i in range(2,32-n):
+    model_path1 = 'weights/yolov5n/epoch'+str(i)+'_lr_0.01.pt'
+    model_path2 = 'weights/yolov5n/epoch'+str(i+n)+'_lr_0.01.pt'
 
     model1 = torch.load(model_path1, map_location=map_location)  # load
     model2 = torch.load(model_path2, map_location=map_location)  # load
@@ -101,20 +103,17 @@ for i in range(268,277-n):
     param1 = net1.parameters()
     param2 = net2.parameters()
 
-    sourcefile = 'npy/yolo-0.001-3-'+str(i+n)+'.npy'
-    compressfile = 'npy/yolocode-0.001-3-'+str(i+n)+'.npy'
+    sourcefile = 'npy/yolo-0.01-5-'+str(i+n)+'.npy'
+    sourcefile1 = 'npy/yolo-0.01-5-'+str(i+n)+'_1.npy'
+    compressfile = 'npy/yolocode-0.01-5-'+str(i+n)+'.npy'
 
     md = []
 
     for j,(p1,p2) in enumerate(zip(param1,param2)):    
         p1_np = p1.detach().numpy()
         p2_np = p2.detach().numpy()
-
-        p1_np = p1_np.view((np.uint8, 4))
-        p2_np = p2_np.view((np.uint8, 4))
         
         diff = (p2_np-p1_np).flatten()
-        #diff = p1_np.flatten()
 
         md.append(diff)
 
@@ -122,44 +121,30 @@ for i in range(268,277-n):
 
     np.save(sourcefile, md)
 
-    # Calculate symbol frequency
-    #count = collections.Counter(list(md))
+    mdbin = []
+    for mdi in md:
+        mdbin.append(dec2bin(mdi))
 
-    # symbol list
-    #color = list(count.keys())
+    mdbin = np.concatenate(mdbin)
 
-    # frequency list
-    #number = list(count.values())
-    #number = np.array(number)
-
-    # probabilities list
-    #p = number / np.sum(number)
-
-    #shannon = ShannonCoding.ShannonCoding(color, p)
-
-    # encode
-    #total_code = shannon.encode(md)
-
-    # decode
-    #a = shannon.decode(total_code)
-
-    #shannon.print_format('Gray')
-
-    #print('Compression ratio:', len(total_code) / (len(md) * 8))
+    np.save(sourcefile1, mdbin)
 
     start = time.time()
 
     # Read input file once to compute symbol frequencies
-    freqs = get_frequencies(sourcefile)
+    freqs = get_frequencies(sourcefile1)
     freqs.increment(256)  # EOF symbol gets a frequency of 1
         
     # Read input file again, compress with arithmetic coding, and write output file
     with contextlib.closing(arithmeticcoding.BitOutputStream(open(compressfile, "wb"))) as bitout:
         write_frequencies(bitout, freqs)
-        compress(freqs, sourcefile, bitout)
+        compress(freqs, sourcefile1, bitout)
 
     sourcefile_size = os.path.getsize(sourcefile)
-    compressfile_size = os.path.getsize(compressfile)
+    sourcefile_size = sourcefile_size
+    compressfile_size = os.path.getsize(compressfile)#+sourcefile_size/4/8+4
+    
+    print(compressfile_size/sourcefile_size)
 
     f.write(str(i+n)+','+str(sourcefile_size)+','+str(compressfile_size)+','+str(compressfile_size/sourcefile_size)+'\n')
 

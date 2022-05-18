@@ -50,6 +50,6 @@ def decompress(freqs, bitin, out):
 
 
 # Main launcher
-if __name__ == "__main__":
+#if __name__ == "__main__":
 	#main(sys.argv[1 : ])
-    main(['rescode.npy', 'res1.npy'])
+#	main(['rescode.npy', 'res1.npy'])

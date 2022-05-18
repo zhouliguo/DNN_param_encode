@@ -40,26 +40,6 @@ def exp_golomb_code(x, sign=True):
 def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
 
-def dec2bin(f):
-    if f>=0:
-        b0=0
-    else:
-        b0=1
-        f=-f
-
-    for i in range(7):
-        m = f*2
-        f = m-int(m)
-        b0 = b0*2+int(m)
-    
-    b1=0
-    for i in range(8):
-        m = f*2
-        f = m-int(m)
-        b1 = b1*2+int(m)
-
-    return np.array([b0, b1], np.uint8)
-
 '''
 for i in range(29,48):
     model_path = 'weights/resnet18/'+str(i)+'_0.01.pth'
@@ -75,9 +55,9 @@ for i in range(29,48):
 quit()
 '''
 resnet = False
-n = 3
+n = 5
 
-f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
+f = open('results/yolo_lossless_res-0.001-5.csv', 'w')
 f.write('epoch,origsize,compsize,ratio\n')
 
 map_location = torch.device('cpu')
@@ -101,8 +81,8 @@ for i in range(268,277-n):
     param1 = net1.parameters()
     param2 = net2.parameters()
 
-    sourcefile = 'npy/yolo-0.001-3-'+str(i+n)+'.npy'
-    compressfile = 'npy/yolocode-0.001-3-'+str(i+n)+'.npy'
+    sourcefile = 'npy/yolo-0.001-5-'+str(i+n)+'.npy'
+    compressfile = 'npy/yolocode-0.001-5-'+str(i+n)+'.npy'
 
     md = []
 

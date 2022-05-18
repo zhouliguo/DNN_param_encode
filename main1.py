@@ -40,26 +40,6 @@ def exp_golomb_code(x, sign=True):
 def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
 
-def dec2bin(f):
-    if f>=0:
-        b0=0
-    else:
-        b0=1
-        f=-f
-
-    for i in range(7):
-        m = f*2
-        f = m-int(m)
-        b0 = b0*2+int(m)
-    
-    b1=0
-    for i in range(8):
-        m = f*2
-        f = m-int(m)
-        b1 = b1*2+int(m)
-
-    return np.array([b0, b1], np.uint8)
-
 '''
 for i in range(29,48):
     model_path = 'weights/resnet18/'+str(i)+'_0.01.pth'
