@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import collections
-import ShannonCoding
+import codec.ShannonCoding as ShannonCoding
 import struct
 import os
 import torchvision.models as models
