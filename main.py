@@ -1,41 +1,17 @@
 import numpy as np
 import torch
 import collections
-import ShannonCoding
+import codec.ShannonCoding as ShannonCoding
 import struct
 import os
 import torchvision.models as models
-from arithmetic_compress import get_frequencies, write_frequencies, compress
+from codec.arithmetic_compress import get_frequencies, write_frequencies, compress
 #from adaptive_arithmetic_compress import compress
-import arithmeticcoding
+from codec import arithmeticcoding
 import contextlib
 import sys
 import time
 from collections import OrderedDict
-
-#Exponential-Golomb coding
-def exp_golomb_code(x, sign=True):
-    if sign:
-        if x == 0:
-            return '1'
-        if x > 0:
-            x = 2*x-1
-        else:
-            x = -2*x
-            
-        x_a = x+1
-        x_a_bin = bin(x_a).replace('0b','')
-        z = x_a_bin.replace('1','0')[:-1]
-        g = z+x_a_bin
-    else:
-        if x == 0:
-            return '1'     
-        x_a = x+1
-        x_a_bin = bin(x_a).replace('0b','')
-        z = x_a_bin.replace('1','0')[:-1]
-        g = z+x_a_bin
-
-    return g
 
 def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
@@ -74,7 +50,8 @@ for i in range(29,48):
     torch.save(model, model_path)
 quit()
 '''
-resnet = False
+
+cnn = 'resnet'
 n = 3
 
 f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
@@ -83,13 +60,13 @@ f.write('epoch,origsize,compsize,ratio\n')
 map_location = torch.device('cpu')
 
 for i in range(268,277-n):
-    model_path1 = 'weights/yolov5n/epoch'+str(i)+'_lr_0.001.pt'
-    model_path2 = 'weights/yolov5n/epoch'+str(i+n)+'_lr_0.001.pt'
+    model_path1 = 'weights/yolov5n/'+str(i)+'_0.001.pt'
+    model_path2 = 'weights/yolov5n/'+str(i+n)+'_0.001.pt'
 
     model1 = torch.load(model_path1, map_location=map_location)  # load
     model2 = torch.load(model_path2, map_location=map_location)  # load
 
-    if resnet:
+    if cnn == 'resnet':
         net1 = models.__dict__['resnet18']()
         net1.load_state_dict(model1['state_dict'])
         net2 = models.__dict__['resnet18']()

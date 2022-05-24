@@ -127,6 +127,7 @@ class ShannonCoding:
         s = ''
         loc = 0
 
+        '''
         lens = [3,4,5,6,7,8,9,10]
 
         while c != '':
@@ -138,8 +139,8 @@ class ShannonCoding:
                     a.append(self.symbols[index])
                     c = c[l:]
                     break
-
         '''
+
         while c != '':
             s += c[loc]
             loc += 1
@@ -150,7 +151,7 @@ class ShannonCoding:
                     loc = 0
                     s = ''
                     break
-        '''
+        
 
         return np.array(a)
 
@@ -160,7 +161,7 @@ class ShannonCoding:
         print('{:<10}\t{:<20}\t{:<25}\t{:<10}\t{}'.
               format(describe, 'Probability', 'Cumulative Probability', 'Length', 'Code'))
         print('-' * 100)
-        '''
+        
         if self.N > 15:
             for i in range(5):
                 print('{:<10}\t{:<20}\t{:<25}\t{:<10}\t{}'.
@@ -174,8 +175,11 @@ class ShannonCoding:
             for i in range(self.N):
                 print('{:<10}\t{:<20}\t{:<25}\t{:<10}\t{}'.
                       format(self.symbols[i], self.P[i], self.cumulative_p[i], self.L[i], self.code[i]))
+
         '''
         for i in range(self.N):
-                print('{:<10}\t{:<20}\t{:<25}\t{:<10}\t{}'.
-                      format(self.symbols[i], self.P[i], self.cumulative_p[i], self.L[i], self.code[i]))
+            print('{:<10}\t{:<20}\t{:<25}\t{:<10}\t{}'.
+                format(self.symbols[i], self.P[i], self.cumulative_p[i], self.L[i], self.code[i]))
+        '''
+
         print('-' * 100)
