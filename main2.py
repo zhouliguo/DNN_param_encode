@@ -40,106 +40,80 @@ def exp_golomb_code(x, sign=True):
 def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
 
-'''
-for i in range(29,48):
-    model_path = 'weights/resnet18/'+str(i)+'_0.01.pth'
-    map_location = torch.device('cpu')
-    model = torch.load(model_path, map_location=map_location)  # load
+def dec2bin(f):
+    #f = f*4
+    if f>=0:
+        b0=0
+    else:
+        b0=1
+        f=-f
+
+    for i in range(7):
+        m = f*2
+        f = m-int(m)
+        b0 = b0*2+int(m)
     
-    new_state_dict = OrderedDict()
-    for key, value in model['state_dict'].items():
-        new_state_dict[key[7:]]=value
+    b1=0
+    for i in range(8):
+        m = f*2
+        f = m-int(m)
+        b1 = b1*2+int(m)
 
-    model['state_dict'] = new_state_dict
-    torch.save(model, model_path)
-quit()
-'''
-resnet = False
+    return np.array([b0, b1], np.uint8)
+
+resnet = True
 n = 5
-
-f = open('results/yolo_lossless_res-0.001-5.csv', 'w')
-f.write('epoch,origsize,compsize,ratio\n')
 
 map_location = torch.device('cpu')
 
-for i in range(268,277-n):
-    model_path1 = 'weights/yolov5n/epoch'+str(i)+'_lr_0.001.pt'
-    model_path2 = 'weights/yolov5n/epoch'+str(i+n)+'_lr_0.001.pt'
+for i in range(59,70):
+    model_path1 = 'weights/resnet18/'+str(i)+'_0.001.pth'
 
     model1 = torch.load(model_path1, map_location=map_location)  # load
-    model2 = torch.load(model_path2, map_location=map_location)  # load
 
     if resnet:
         net1 = models.__dict__['resnet18']()
         net1.load_state_dict(model1['state_dict'])
-        net2 = models.__dict__['resnet18']()
-        net2.load_state_dict(model2['state_dict'])
     else:
         net1 = model1['model']
-        net2 = model2['model']
 
     param1 = net1.parameters()
-    param2 = net2.parameters()
-
-    sourcefile = 'npy/yolo-0.001-5-'+str(i+n)+'.npy'
-    compressfile = 'npy/yolocode-0.001-5-'+str(i+n)+'.npy'
 
     md = []
 
-    for j,(p1,p2) in enumerate(zip(param1,param2)):    
-        p1_np = p1.detach().numpy()
-        p2_np = p2.detach().numpy()
-
-        p1_np = p1_np.view((np.uint8, 4))
-        p2_np = p2_np.view((np.uint8, 4))
+    for j,p1 in enumerate(param1):    
+        p1_np = p1.detach().numpy().flatten()
         
-        diff = (p2_np-p1_np).flatten()
-        #diff = p1_np.flatten()
-
-        md.append(diff)
+        md.append(p1_np)
 
     md = np.concatenate(md)
 
-    np.save(sourcefile, md)
+    np.save('npy/resnet18/'+str(i)+'_0.001.npy', md)
+    continue
+    mdbin = []
+    for mdi in md:
+        mdbin.append(dec2bin(mdi))
 
-    # Calculate symbol frequency
-    #count = collections.Counter(list(md))
+    mdbin = np.concatenate(mdbin)
 
-    # symbol list
-    #color = list(count.keys())
-
-    # frequency list
-    #number = list(count.values())
-    #number = np.array(number)
-
-    # probabilities list
-    #p = number / np.sum(number)
-
-    #shannon = ShannonCoding.ShannonCoding(color, p)
-
-    # encode
-    #total_code = shannon.encode(md)
-
-    # decode
-    #a = shannon.decode(total_code)
-
-    #shannon.print_format('Gray')
-
-    #print('Compression ratio:', len(total_code) / (len(md) * 8))
+    np.save(sourcefile1, mdbin)
 
     start = time.time()
 
     # Read input file once to compute symbol frequencies
-    freqs = get_frequencies(sourcefile)
+    freqs = get_frequencies(sourcefile1)
     freqs.increment(256)  # EOF symbol gets a frequency of 1
         
     # Read input file again, compress with arithmetic coding, and write output file
     with contextlib.closing(arithmeticcoding.BitOutputStream(open(compressfile, "wb"))) as bitout:
         write_frequencies(bitout, freqs)
-        compress(freqs, sourcefile, bitout)
+        compress(freqs, sourcefile1, bitout)
 
     sourcefile_size = os.path.getsize(sourcefile)
-    compressfile_size = os.path.getsize(compressfile)
+    sourcefile_size = sourcefile_size
+    compressfile_size = os.path.getsize(compressfile)#+sourcefile_size/4/8+4
+    
+    print(compressfile_size/sourcefile_size)
 
     f.write(str(i+n)+','+str(sourcefile_size)+','+str(compressfile_size)+','+str(compressfile_size/sourcefile_size)+'\n')
 
