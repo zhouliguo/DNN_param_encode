@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import sys
+import collections
 
 
 class ShannonCoding:
@@ -183,3 +184,30 @@ class ShannonCoding:
         '''
 
         print('-' * 100)
+
+if __name__ == '__main__':
+    md = ''
+    # Calculate symbol frequency
+    count = collections.Counter(list(md))
+
+    # symbol list
+    color = list(count.keys())
+
+    # frequency list
+    number = list(count.values())
+    number = np.array(number)
+
+    # probabilities list
+    p = number / np.sum(number)
+
+    shannon = ShannonCoding.ShannonCoding(color, p)
+
+    # encode
+    total_code = shannon.encode(md)
+
+    # decode
+    a = shannon.decode(total_code)
+
+    shannon.print_format('Gray')
+
+    print('Compression ratio:', len(total_code) / (len(md) * 8))
