@@ -33,7 +33,8 @@ python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yol
 2. To evaluate our method, run:
 
 ```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
+python eval_lossless.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --dnn 'yolo' --path-pt 'weights/yolov5n/'
+python eval_lossy.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --dnn 'yolo' --path-pt 'weights/yolov5n/'
 ```
 
 >📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
