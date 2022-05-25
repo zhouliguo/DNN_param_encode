@@ -181,7 +181,7 @@ def ResEntropy16bits(param1, param2):
 if __name__ == '__main__':
     cnn = 'yolo'        #network
     n = 5               #epoch interval
-    method = 'ResEntropy'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+    method = 'ResEntropy16bits'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
 
     #f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
     #f.write('epoch,origsize,compsize,ratio\n')
