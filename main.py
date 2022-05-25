@@ -15,12 +15,13 @@ def float2byte(f):
     return [hex(i) for i in struct.pack('f', f)]
 
 def dec2bin(f):
+    #f = f*4
     if f>=0:
         b0=0
     else:
         b0=1
         f=-f
-
+    
     for i in range(7):
         m = f*2
         f = m-int(m)
@@ -33,6 +34,24 @@ def dec2bin(f):
         b1 = b1*2+int(m)
 
     return np.array([b0, b1], np.uint8)
+
+def bin2dec(f):
+    b0 = bin(f[0])[2:].zfill(8)
+    b1 = bin(f[1])[2:].zfill(8)
+
+    b0 = b0+b1
+
+    d = 0
+    for i, b in enumerate(b0):
+        if i==0:
+            s = b
+            continue
+        d = d+int(b)/(2**i)
+
+    if s == '1':
+        d = -d
+    #d = d/4
+    return d
 
 '''
 for i in range(29,48):
@@ -48,6 +67,20 @@ for i in range(29,48):
     torch.save(model, model_path)
 quit()
 '''
+def acompress(originalfile, compressedfile):
+    # Read input file once to compute symbol frequencies
+    freqs = get_frequencies(originalfile)
+    freqs.increment(256)  # EOF symbol gets a frequency of 1
+        
+    # Read input file again, compress with arithmetic coding, and write output file
+    with contextlib.closing(arithmeticcoding.BitOutputStream(open(compressedfile, "wb"))) as bitout:
+        write_frequencies(bitout, freqs)
+        compress(freqs, originalfile, bitout)
+
+    originalsize = os.path.getsize(originalfile)
+    compressedsize = os.path.getsize(compressedfile)
+
+    return originalsize, compressedsize
 
 def ResEntropy(param1, param2):
     originalfile = 'npy/originalfile.npy'
@@ -70,19 +103,7 @@ def ResEntropy(param1, param2):
 
     np.save(originalfile, md)
 
-    # Read input file once to compute symbol frequencies
-    freqs = get_frequencies(originalfile)
-    freqs.increment(256)  # EOF symbol gets a frequency of 1
-        
-    # Read input file again, compress with arithmetic coding, and write output file
-    with contextlib.closing(arithmeticcoding.BitOutputStream(open(compressedfile, "wb"))) as bitout:
-        write_frequencies(bitout, freqs)
-        compress(freqs, originalfile, bitout)
-
-    originalsize = os.path.getsize(originalfile)
-    compressedsize = os.path.getsize(compressedfile)
-
-    return originalsize, compressedsize
+    return acompress(originalfile, compressedfile)
 
 def Float16(param2):
     md2 = []
@@ -131,10 +152,54 @@ def ResidualFloat16(param1, param2):
     rmse = np.sqrt(mean_squared_error(md2, md3))
     return rmse, diff_max, diff_min
 
+def ResEntropy16bits(param1, param2):
+    originalfile = 'npy/originalfile.npy'
+    compressedfile = 'npy/compressedfile.npy'
+
+    md1 = []
+    md2 = []
+    md3 = []
+
+    for j,(p1,p2) in enumerate(zip(param1,param2)):    
+        p1_np = p1.detach().numpy().flatten()
+        p2_np = p2.detach().numpy().flatten()
+
+        md1.append(p1_np)
+        md2.append(p2_np)
+        md3.append(p2_np-p1_np)
+
+    md1 = np.concatenate(md1)
+    md2 = np.concatenate(md2)
+    md3 = np.concatenate(md3)
+
+    md16bits = []
+    for j, mdi in enumerate(md3):
+        bits16 = dec2bin(mdi)
+        md16bits.append(bits16)
+        md3[j] = bin2dec(bits16)
+    
+    md16bits = np.concatenate(md16bits)
+
+    np.save(originalfile, md16bits)
+    acompress(originalfile, compressedfile)
+    
+    originalsize = os.path.getsize(originalfile) * 2
+    compressedsize = os.path.getsize(compressedfile)
+
+    md3 = md3+md1
+
+    diff = md2 - md3
+
+    diff_max = np.max(diff)
+    diff_min = np.min(diff)
+    rmse = np.sqrt(mean_squared_error(md2, md3))
+
+    return rmse, diff_max, diff_min, originalsize, compressedsize
+
 if __name__ == '__main__':
     cnn = 'yolo'        #network
     n = 3               #epoch interval
-    method = 'ResidualFloat16'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+    method = 'ResEntropy16bits'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
 
     #f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
     #f.write('epoch,origsize,compsize,ratio\n')
@@ -166,11 +231,16 @@ if __name__ == '__main__':
             #f.write(str(i+n)+','+str(sourcefile_size)+','+str(compressfile_size)+','+str(compressfile_size/sourcefile_size)+'\n')
             print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', originalsize, 'MB\tCompressed Size:', compressedsize, 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%')
 
-        if method == 'Float16':
+        if method == 'Float16': #Bit Saving: 50%
             rmse, diff_max, diff_min = Float16(param2)
             print('Epoch:', i+n, '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
 
-        if method == 'ResidualFloat16':
+        if method == 'ResidualFloat16': #Bit Saving: 50%
             rmse, diff_max, diff_min = ResidualFloat16(param1, param2)
             print('Epoch:', i+n, '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
+
+        if method == 'ResEntropy16bits':
+            start = time.time()
+            rmse, diff_max, diff_min, originalsize, compressedsize = ResEntropy16bits(param1, param2)
+            print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', originalsize, 'MB\tCompressed Size:', compressedsize, 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%', '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
 
