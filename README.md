@@ -14,7 +14,7 @@ pip install -r requirements.txt
 ## Setup
 
 To compile entropy encoding and decoding algorithms:
-```Setup
+```setup
 cd codec
 python setup.py build_ext --inplace
 ```
@@ -29,7 +29,8 @@ python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yol
 
 ## Evaluation
 
-To evaluate my model on ImageNet, run:
+1. Train [ResNet-18](https://github.com/pytorch/examples/tree/main/imagenet) and [YOLOv5n](https://github.com/ultralytics/yolov5), and save parameters for every epoch (filename: 'epoch_learningrate.pt', e.g. '21_0.01.pt').
+2. To evaluate our method, run:
 
 ```eval
 python eval.py --model-file mymodel.pth --benchmark imagenet

@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import struct
+import os
 
 import torchvision.models as models
 import time
@@ -12,31 +13,39 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--learning-rate', type=str, default='0,01', help='learning rate when training these epochs')
     parser.add_argument('--epoch-interval', type=int, default=3, help='interval between two epochs')
+    parser.add_argument('--epoch-first', type=int, default=21, help='first epoch')
+    parser.add_argument('--epoch-last', type=int, default=100, help='last epoch')
     parser.add_argument('--dnn', type=str, default='yolo', help='dnn model')
     parser.add_argument('--method', type=str, default='ResEntropy16bits', help='compression method')
+    parser.add_argument('--path-pt', type=str, default='weights/yolov5n/', help='path for saved parameter files')
 
     return parser.parse_args()
 
 if __name__ == '__main__':
     opt = parse_opt()
     
-    dnn = 'yolo'        #network
-    n = 5               #epoch interval
-    method = 'ResEntropy16bits'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+    dnn = opt.method       #network
+    n = opt.epoch_interval #epoch interval
+    method = opt.method    #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
 
     #f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
     #f.write('epoch,origsize,compsize,ratio\n')
 
     map_location = torch.device('cpu')
 
-    for i in range(21,31-n):
-        model_path1 = 'weights/yolov5n/'+str(i)+'_0.01.pt'
-        model_path2 = 'weights/yolov5n/'+str(i+n)+'_0.01.pt'
+    start = opt.epoch_first
+    end = opt.epoch_last
+    lr = opt.learning_rate
+    path_pt = opt.path_pt
+
+    for i in range(start, end-n):
+        model_path1 = os.path.join(path_pt, str(i)+'_'+lr+'.pt')
+        model_path2 = os.path.join(path_pt, str(i+n)+'_'+lr+'.pt')
 
         model1 = torch.load(model_path1, map_location=map_location)
         model2 = torch.load(model_path2, map_location=map_location)
 
-        if cnn == 'resnet':
+        if dnn == 'resnet':
             net1 = models.__dict__['resnet18']()
             net1.load_state_dict(model1['state_dict'])
             net2 = models.__dict__['resnet18']()
