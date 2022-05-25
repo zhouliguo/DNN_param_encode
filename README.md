@@ -2,11 +2,7 @@
 
 This repository is the official implementation of 《DNN Model Residual Encoding Framework for Fast Parameter Transfer》
 
-<img src="figures/lossless.png">
-<center>Lossless</center>
-&nbsp
 <img src="figures/lossy.png">
-<center>Lossy</center>
 
 ## Requirements
 
