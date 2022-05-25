@@ -8,19 +8,24 @@ This repository is the official implementation of 《DNN Model Residual Encoding
 
 To install requirements:
 
-```setup
+```requirements
 pip install -r requirements.txt
 ```
+## Setup
 
-## Training
-
-To train the model(s) in the paper, run this command:
-
-```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+To compile entropy encoding and decoding algorithms:
+```Setup
+cd codec
+python setup.py build_ext --inplace
 ```
 
->📋  Describe how to train the models, with example commands on how to train the models in your paper, including the full training procedure and appropriate hyperparameters.
+## Compress Demo
+
+A demo for compress parameters:
+
+```demo
+python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yolov5n/24_0.01.pt' --dnn 'yolo' --method 'ResEntropy16bits'
+```
 
 ## Evaluation
 
