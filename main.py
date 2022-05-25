@@ -9,49 +9,11 @@ from collections import OrderedDict
 from codec import arithmeticcoding
 from codec.arithmetic_compress import get_frequencies, write_frequencies, compress
 from sklearn.metrics import mean_squared_error
+from codec.convert import dec2bin, bin2dec
 
 
-def float2byte(f):
-    return [hex(i) for i in struct.pack('f', f)]
-
-def dec2bin(f):
-    #f = f*4
-    if f>=0:
-        b0=0
-    else:
-        b0=1
-        f=-f
-    
-    for i in range(7):
-        m = f*2
-        f = m-int(m)
-        b0 = b0*2+int(m)
-    
-    b1=0
-    for i in range(8):
-        m = f*2
-        f = m-int(m)
-        b1 = b1*2+int(m)
-
-    return np.array([b0, b1], np.uint8)
-
-def bin2dec(f):
-    b0 = bin(f[0])[2:].zfill(8)
-    b1 = bin(f[1])[2:].zfill(8)
-
-    b0 = b0+b1
-
-    d = 0
-    for i, b in enumerate(b0):
-        if i==0:
-            s = b
-            continue
-        d = d+int(b)/(2**i)
-
-    if s == '1':
-        d = -d
-    #d = d/4
-    return d
+#def float2byte(f):
+#    return [hex(i) for i in struct.pack('f', f)]
 
 '''
 for i in range(29,48):
@@ -67,7 +29,8 @@ for i in range(29,48):
     torch.save(model, model_path)
 quit()
 '''
-def acompress(originalfile, compressedfile):
+
+def compress_file(originalfile, compressedfile):
     # Read input file once to compute symbol frequencies
     freqs = get_frequencies(originalfile)
     freqs.increment(256)  # EOF symbol gets a frequency of 1
@@ -78,6 +41,21 @@ def acompress(originalfile, compressedfile):
         compress(freqs, originalfile, bitout)
 
     originalsize = os.path.getsize(originalfile)
+    compressedsize = os.path.getsize(compressedfile)
+
+    return originalsize, compressedsize
+
+def compress_array(originalarray, compressedfile):
+    # Read input file once to compute symbol frequencies
+    freqs = get_frequencies(originalarray)
+    freqs.increment(256)  # EOF symbol gets a frequency of 1
+        
+    # Read input file again, compress with arithmetic coding, and write output file
+    with contextlib.closing(arithmeticcoding.BitOutputStream(open(compressedfile, "wb"))) as bitout:
+        write_frequencies(bitout, freqs)
+        compress(freqs, originalarray, bitout)
+
+    originalsize = len(originalarray)
     compressedsize = os.path.getsize(compressedfile)
 
     return originalsize, compressedsize
@@ -103,7 +81,7 @@ def ResEntropy(param1, param2):
 
     np.save(originalfile, md)
 
-    return acompress(originalfile, compressedfile)
+    return compress_file(originalfile, compressedfile)
 
 def Float16(param2):
     md2 = []
@@ -173,15 +151,19 @@ def ResEntropy16bits(param1, param2):
     md3 = np.concatenate(md3)
 
     md16bits = []
+
+    start = time.time()
     for j, mdi in enumerate(md3):
         bits16 = dec2bin(mdi)
         md16bits.append(bits16)
         md3[j] = bin2dec(bits16)
     
+    print(time.time()-start)
+
     md16bits = np.concatenate(md16bits)
 
     np.save(originalfile, md16bits)
-    acompress(originalfile, compressedfile)
+    compress_file(originalfile, compressedfile)
     
     originalsize = os.path.getsize(originalfile) * 2
     compressedsize = os.path.getsize(compressedfile)
@@ -198,8 +180,8 @@ def ResEntropy16bits(param1, param2):
 
 if __name__ == '__main__':
     cnn = 'yolo'        #network
-    n = 3               #epoch interval
-    method = 'ResEntropy16bits'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+    n = 5               #epoch interval
+    method = 'ResEntropy'  #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
 
     #f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
     #f.write('epoch,origsize,compsize,ratio\n')
@@ -221,6 +203,9 @@ if __name__ == '__main__':
         else:
             net1 = model1['model']
             net2 = model2['model']
+
+        #param1 = net1.state_dict()
+        #param2 = net2.state_dict()
 
         param1 = net1.parameters()
         param2 = net2.parameters()
