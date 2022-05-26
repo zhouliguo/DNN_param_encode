@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from collections import OrderedDict
+#from collections import OrderedDict
 import contextlib
 from codec import arithmeticcoding
 from codec.arithmetic_compress import get_frequencies, write_frequencies, compress

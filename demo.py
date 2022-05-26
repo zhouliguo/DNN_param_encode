@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import struct
 
 import torchvision.models as models
 import time

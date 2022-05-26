@@ -2,8 +2,6 @@
 
 This repository is the official implementation of 《DNN Model Residual Encoding Framework for Fast Parameter Transfer》
 
-<img src="figures/lossy.png">
-
 ## Requirements
 
 To install requirements:
@@ -15,15 +13,16 @@ pip install -r requirements.txt
 
 To compile entropy encoding and decoding algorithms:
 ```setup
-cd codec
+cd DNN_param_encode/codec
 python setup.py build_ext --inplace
 ```
 
 ## Compress Demo
 
-An demo of compressing parameters in the latter epoch when parameters in two near epochs are given (the entropy encoding code is being optimized, and the speed is currently relatively slow):
+A demo of compressing parameters in the latter epoch when parameters in two near epochs are given (the entropy encoding code is being optimized, and the speed is currently relatively slow):
 
 ```demo
+cd DNN_param_encode
 python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yolov5n/24_0.01.pt' --dnn 'yolo' --method 'ResEntropy16bits'
 ```
 
@@ -33,8 +32,10 @@ python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yol
 2. To evaluate our method, run:
 
 ```eval
+cd DNN_param_encode
 python eval_lossless.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --path-pt 'weights/yolov5n/'
-python eval_lossy.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --method 'ResEntropy16bits' --path-pt 'weights/yolov5n/'
+or
+python eval_lossy.py --method 'ResEntropy16bits' --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --path-pt 'weights/yolov5n/'
 ```
 
 

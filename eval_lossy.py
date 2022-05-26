@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import struct
 import os
 from collections import OrderedDict
 
@@ -25,7 +24,7 @@ def parse_opt():
 if __name__ == '__main__':
     opt = parse_opt()
     
-    dnn = opt.method       # network
+    dnn = opt.dnn       # network
     n = opt.epoch_interval # epoch interval
     method = opt.method    # Float16, ResidualFloat16, ResEntropy16bits
 
