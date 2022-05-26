@@ -2,6 +2,31 @@
 
 This repository is the official implementation of 《DNN Model Residual Encoding Framework for Fast Parameter Transfer》
 
+## Effect on Peformance
+ResNet-18 (ImageNet): Current Epoch=90, Previous Epoch=90-n
+|Methods|Accuracy@Top1|Accuracy@Top5|
+|-------|-------------|-------------|
+|Original|69.546|89.166|
+|Float16|69.536|89.184|
+|ResidualFloat16 n=1|69.546|89.166|
+|ResidualFloat16 n=3|69.544|89.166|
+|ResidualFloat16 n=5|69.544|89.166|
+|ResEntropy16bits n=1|69.546|89.166|
+|ResEntropy16bits n=3|69.546|89.166|
+|ResEntropy16bits n=5|69.546|89.166|
+
+YOLOv5n (MicroSoft COCO): Current Epoch=200, Previous Epoch=200-n
+|Methods|mAP@.5|mAP@.5:.95|
+|-------|------|----------|
+|Original|0.447|0.261|
+|Float16|0.447|0.261|
+|ResidualFloat16 n=1|0.447|0.261|
+|ResidualFloat16 n=3|0.447|0.261|
+|ResidualFloat16 n=5|0.447|0.261|
+|ResEntropy16bits n=1|0.447|0.261|
+|ResEntropy16bits n=3|0.447|0.261|
+|ResEntropy16bits n=5|0.447|0.261|
+
 ## Requirements
 
 To install requirements:
