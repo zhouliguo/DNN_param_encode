@@ -2,12 +2,13 @@ import numpy as np
 import torch
 import struct
 import os
+from collections import OrderedDict
 
 import torchvision.models as models
 import time
 import argparse
 
-from compression import ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+from compression import Float16, ResidualFloat16, ResEntropy16bits
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -16,7 +17,7 @@ def parse_opt():
     parser.add_argument('--epoch-first', type=int, default=21, help='first epoch')
     parser.add_argument('--epoch-last', type=int, default=100, help='last epoch')
     parser.add_argument('--dnn', type=str, default='yolo', help='dnn model')
-    parser.add_argument('--method', type=str, default='ResEntropy16bits', help='compression method')
+    parser.add_argument('--method', type=str, default='ResEntropy16bits', help='compression method: Float16, ResidualFloat16, ResEntropy16bits')
     parser.add_argument('--path-pt', type=str, default='weights/yolov5n/', help='path for saved parameter files')
 
     return parser.parse_args()
@@ -24,9 +25,9 @@ def parse_opt():
 if __name__ == '__main__':
     opt = parse_opt()
     
-    dnn = opt.method       #network
-    n = opt.epoch_interval #epoch interval
-    method = opt.method    #ResEntropy, Float16, ResidualFloat16, ResEntropy16bits
+    dnn = opt.method       # network
+    n = opt.epoch_interval # epoch interval
+    method = opt.method    # Float16, ResidualFloat16, ResEntropy16bits
 
     #f = open('results/yolo_lossless_res-0.001-3.csv', 'w')
     #f.write('epoch,origsize,compsize,ratio\n')
@@ -38,6 +39,9 @@ if __name__ == '__main__':
     lr = opt.learning_rate
     path_pt = opt.path_pt
 
+    param2_ = None  # reconstructed param
+
+    print('Start compressing ...')
     for i in range(start, end-n, n):
         model_path1 = os.path.join(path_pt, str(i)+'_'+lr+'.pt')
         model_path2 = os.path.join(path_pt, str(i+n)+'_'+lr+'.pt')
@@ -54,28 +58,35 @@ if __name__ == '__main__':
             net1 = model1['model']
             net2 = model2['model']
 
-        #param1 = net1.state_dict()
-        #param2 = net2.state_dict()
+        # param2_ is the reconstructed parameters
+        if param2_ is not None:
+            p_start = 0
+
+            state_dict = net1.state_dict()
+            new_state_dict = OrderedDict()
+
+            for key, value in state_dict.items():
+                key_type = key.split('.')[-1]
+                if key_type == 'weight' or key_type == 'bias':
+                    num = value.numel()
+                    shape = value.size()
+                    state_dict[key] = torch.from_numpy(np.reshape(param2_[p_start:p_start+num], shape))
+                    p_start = p_start+num
+            net1.load_state_dict(state_dict)
 
         param1 = net1.parameters()
         param2 = net2.parameters()
 
-        if method == 'ResEntropy': #Lossless
-            start = time.time()
-            originalsize, compressedsize = ResEntropy(param1, param2)
-            #f.write(str(i+n)+','+str(sourcefile_size)+','+str(compressfile_size)+','+str(compressfile_size/sourcefile_size)+'\n')
-            print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', originalsize, 'MB\tCompressed Size:', compressedsize, 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%')
+        if method == 'Float16':
+            rmse, diff_max, diff_min, originalsize, compressedsize = Float16(param2)
+            print('Epoch:', i+n, '-', i, '\tOriginal Size:', np.around(originalsize/1024/1024,2), 'MB\tCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
 
-        if method == 'Float16': #Bit Saving: 50%
-            rmse, diff_max, diff_min = Float16(param2)
-            print('Epoch:', i+n, '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
-
-        if method == 'ResidualFloat16': #Bit Saving: 50%
-            rmse, diff_max, diff_min = ResidualFloat16(param1, param2)
-            print('Epoch:', i+n, '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
+        if method == 'ResidualFloat16':
+            rmse, diff_max, diff_min, originalsize, compressedsize, param2_ = ResidualFloat16(param1, param2)
+            print('Epoch:', i+n, '-', i, '\tOriginal Size:', np.around(originalsize/1024/1024,2), 'MB\tCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
 
         if method == 'ResEntropy16bits':
             start = time.time()
-            rmse, diff_max, diff_min, originalsize, compressedsize = ResEntropy16bits(param1, param2)
-            print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', originalsize, 'MB\tCompressed Size:', compressedsize, 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%', '\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
+            rmse, diff_max, diff_min, originalsize, compressedsize, param2_ = ResEntropy16bits(param1, param2)
+            print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', np.around(originalsize/1024/1024,2), 'MB\tCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%\tRMSE:', rmse, '\tMax of Diff:', diff_max, '\tMin of Diff:', diff_min)
 

@@ -56,11 +56,11 @@ if __name__ == '__main__':
         rmse, diff_max, diff_min, originalsize, compressedsize = Float16(param2)
         print('Original Size:', np.around(originalsize/1024/1024,2), 'MB\nCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\nBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%\nRMSE:', rmse, '\nMax of Diff:', diff_max, '\nMin of Diff:', diff_min)
     if method == 'ResidualFloat16': 
-        rmse, diff_max, diff_min, originalsize, compressedsize = ResidualFloat16(param1, param2)
+        rmse, diff_max, diff_min, originalsize, compressedsize, _ = ResidualFloat16(param1, param2)
         print('Original Size:', np.around(originalsize/1024/1024,2), 'MB\nCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\nBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%\nRMSE:', rmse, '\nMax of Diff:', diff_max, '\nMin of Diff:', diff_min)
 
     if method == 'ResEntropy16bits':
         start = time.time()
-        rmse, diff_max, diff_min, originalsize, compressedsize = ResEntropy16bits(param1, param2)
+        rmse, diff_max, diff_min, originalsize, compressedsize, _ = ResEntropy16bits(param1, param2)
         print('Compression Time:', np.around(time.time()-start, 2), 's\nOriginal Size:', np.around(originalsize/1024/1024,2), 'MB\nCompressed Size:', np.around(compressedsize/1024/1024,2), 'MB\nBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%', '\nRMSE:', rmse, '\nMax of Diff:', diff_max, '\nMin of Diff:', diff_min)
 

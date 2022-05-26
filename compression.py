@@ -76,12 +76,12 @@ def ResEntropy(param1, param2):
     md = np.concatenate(md)
 
     np.save(originalfile, md)
+    originalsize, compressedsize = compress_file(originalfile, compressedfile)
 
-    return compress_file(originalfile, compressedfile)
+    return originalsize, compressedsize
 
 def Float16(param2):
     md2 = []
-    md3 = []
 
     for j,p2 in enumerate(param2):    
         p2_np = p2.detach().numpy().flatten()
@@ -90,17 +90,17 @@ def Float16(param2):
 
     md2 = np.concatenate(md2)
 
-    md3 = md2.astype(np.float16)
+    md2_ = md2.astype(np.float16)
 
     originalsize = len(md2)*4
-    compressedsize = len(md3)*2
+    compressedsize = len(md2_)*2
 
-    diff = md2-md3
+    diff = md2-md2_
 
     diff_max = np.max(diff)
     diff_min = np.min(diff)
 
-    rmse = np.sqrt(mean_squared_error(md2, md3))
+    rmse = np.sqrt(mean_squared_error(md2, md2_))
 
     return rmse, diff_max, diff_min, originalsize, compressedsize
 
@@ -124,14 +124,14 @@ def ResidualFloat16(param1, param2):
     originalsize = len(md2)*4
     compressedsize = len(md3)*2
 
-    md3 = md3 + md1
-    diff = md2 - md3
+    md2_ = md3 + md1
+    diff = md2 - md2_
 
     diff_max = np.max(diff)
     diff_min = np.min(diff)
-    rmse = np.sqrt(mean_squared_error(md2, md3))
+    rmse = np.sqrt(mean_squared_error(md2, md2_))
 
-    return rmse, diff_max, diff_min, originalsize, compressedsize
+    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_
 
 def ResEntropy16bits(param1, param2):
     bits16file = 'npy/bits16file.npy'
@@ -168,12 +168,12 @@ def ResEntropy16bits(param1, param2):
     originalsize = os.path.getsize(bits16file) * 2
     compressedsize = os.path.getsize(compressedfile)
 
-    md3 = md3+md1
+    md2_ = md3+md1
 
-    diff = md2 - md3
+    diff = md2 - md2_
 
     diff_max = np.max(diff)
     diff_min = np.min(diff)
-    rmse = np.sqrt(mean_squared_error(md2, md3))
+    rmse = np.sqrt(mean_squared_error(md2, md2_))
 
-    return rmse, diff_max, diff_min, originalsize, compressedsize
+    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_

@@ -16,7 +16,7 @@ def parse_opt():
     parser.add_argument('--epoch-first', type=int, default=21, help='first epoch')
     parser.add_argument('--epoch-last', type=int, default=100, help='last epoch')
     parser.add_argument('--dnn', type=str, default='yolo', help='dnn model')
-    parser.add_argument('--method', type=str, default='ResEntropy', help='compression method')
+    parser.add_argument('--method', type=str, default='ResEntropy', help='compression method: ResEntropy, Float16, ResidualFloat16, ResEntropy16bits')
     parser.add_argument('--path-pt', type=str, default='weights/yolov5n/', help='path for saved parameter files')
 
     return parser.parse_args()
@@ -38,6 +38,7 @@ if __name__ == '__main__':
     lr = opt.learning_rate
     path_pt = opt.path_pt
 
+    print('Start compressing ...')
     for i in range(start, end-n, n):
         model_path1 = os.path.join(path_pt, str(i)+'_'+lr+'.pt')
         model_path2 = os.path.join(path_pt, str(i+n)+'_'+lr+'.pt')
@@ -63,4 +64,4 @@ if __name__ == '__main__':
         start = time.time()
         originalsize, compressedsize = ResEntropy(param1, param2)
         #f.write(str(i+n)+','+str(sourcefile_size)+','+str(compressfile_size)+','+str(compressfile_size/sourcefile_size)+'\n')
-        print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', originalsize, 'MB\tCompressed Size:', compressedsize, 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%')
+        print('Epoch:', i+n, '-', i, '\tCompression Time:', np.around(time.time()-start, 2), 's\tOriginal Size:', np.around(originalsize/1024/1024, 2), 'MB\tCompressed Size:', np.around(compressedsize/1024/1024, 2), 'MB\tBit Saving:', np.around(100-100*compressedsize/originalsize, 2), '%')
