@@ -124,14 +124,14 @@ def ResidualFloat16(param1, param2):
     originalsize = len(md2)*4
     compressedsize = len(md3)*2
 
-    md2_ = md3 + md1
-    diff = md2 - md2_
+    md2_r = md3 + md1
+    diff = md2 - md2_r
 
     diff_max = np.max(diff)
     diff_min = np.min(diff)
-    rmse = np.sqrt(mean_squared_error(md2, md2_))
+    rmse = np.sqrt(mean_squared_error(md2, md2_r))
 
-    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_
+    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_r
 
 def ResEntropy16bits(param1, param2):
     bits16file = 'npy/bits16file.npy'
@@ -168,12 +168,11 @@ def ResEntropy16bits(param1, param2):
     originalsize = os.path.getsize(bits16file) * 2
     compressedsize = os.path.getsize(compressedfile)
 
-    md2_ = md3+md1
-
-    diff = md2 - md2_
+    md2_r = md3+md1
+    diff = md2 - md2_r
 
     diff_max = np.max(diff)
     diff_min = np.min(diff)
-    rmse = np.sqrt(mean_squared_error(md2, md2_))
+    rmse = np.sqrt(mean_squared_error(md2, md2_r))
 
-    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_
+    return rmse, diff_max, diff_min, originalsize, compressedsize, md2_r

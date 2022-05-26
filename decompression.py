@@ -1,5 +1,5 @@
-from arithmetic_decompress import read_frequencies, decompress
-import arithmeticcoding
+from codec.arithmetic_decompress import read_frequencies, decompress
+from codec import arithmeticcoding
 
 # Command line main application function.
 inputfile, outputfile = 'rescodea.npy', 'ori.npy'

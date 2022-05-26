@@ -37,8 +37,4 @@ python eval_lossless.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' -
 python eval_lossy.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --epoch-first 21 --epoch-last 100 --method 'ResEntropy16bits' --path-pt 'weights/yolov5n/'
 ```
 
-## Results
-
-Results of compression and reconstruction of both lossless and lossy methods
-<img src="figures/result.png" width=100% height=100% align=center>
 
