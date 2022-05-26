@@ -39,7 +39,6 @@ python eval_lossy.py --learning-rate '0.01' --epoch-interval 3 --dnn 'yolo' --ep
 
 ## Results
 
-Our model achieves the following performance on :
-
+Results of compression and reconstruction of both lossless and lossy methods
 <img src="figures/result.png" width=100% height=100% align=center>
 
