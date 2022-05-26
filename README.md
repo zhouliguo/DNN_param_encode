@@ -21,7 +21,7 @@ python setup.py build_ext --inplace
 
 ## Compress Demo
 
-A demo for compress parameters:
+An demo of compressing parameters in the latter epoch when parameters in two near epochs are given (the entropy encoding code is being optimized, and the speed is currently relatively slow):
 
 ```demo
 python demo.py --pre-epoch 'weights/yolov5n/21_0.01.pt' --cur-epoch 'weights/yolov5n/24_0.01.pt' --dnn 'yolo' --method 'ResEntropy16bits'
